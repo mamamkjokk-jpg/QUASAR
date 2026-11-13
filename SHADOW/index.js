@@ -1,5 +1,5 @@
 const ws3 = require("ws3-fca");
-const { getThreadInfoSafe, getThreadListSafe, isCoolingDown } = require("./thread-info-guard");
+const { getThreadInfoSafe, getThreadListSafe, isCoolingDown, installThreadOperationGuard } = require("./thread-info-guard");
 const fs = require("fs");
 const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
@@ -153,6 +153,8 @@ ws3.login({ appState }, (err, api) => {
 
   // Restore account-profile actions removed from ws3-fca 3.x public API.
   require("./ws3-profile-api")(api);
+
+  installThreadOperationGuard(api);
 
   // Restore saved nickname protections for this session
   const nicknameCommand = commands["كنيات"];
@@ -322,7 +324,7 @@ ws3.login({ appState }, (err, api) => {
           infos = await getThreadInfoSafe(api, batch);
         } catch (e) {
           console.log("تعذر فحص القروبات:", e.message);
-          if (isCoolingDown()) break;
+          if (isCoolingDown(api)) break;
           continue;
         }
 
@@ -381,7 +383,7 @@ ws3.login({ appState }, (err, api) => {
         try {
           infos = await getThreadInfoSafe(api, batch);
         } catch (e) {
-          if (isCoolingDown()) {
+          if (isCoolingDown(api)) {
             console.log("[GROUP NAME GUARD] Cooldown active; remaining batches skipped.");
             break;
           }

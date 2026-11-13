@@ -76,6 +76,15 @@ test("القائمة الفارغة نتيجة صحيحة لنهاية الصف�
   assert.deepEqual(result, []);
 });
 
+test("رفض نتيجة قائمة المجموعات غير المصفوفة", async () => {
+  await assert.rejects(
+    getThreadListSafe({
+      getThreadList: async () => ({ threadID: "12345" })
+    }, 100, null, ["INBOX"]),
+    /thread list must be an array/
+  );
+});
+
 test("رفض نتيجة معلومات المجموعة الفارغة", async () => {
   await assert.rejects(
     getThreadInfoSafe({
