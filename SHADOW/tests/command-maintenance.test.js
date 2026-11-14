@@ -49,13 +49,13 @@ test("الأوامر المحذوفة غير موجودة، والأوامر ا�
   const root = path.resolve(__dirname, "../..");
   const removed = [
     "pp.js", "حماية_الصورة.js", "setavt.js", "setname.js", "emojimix.js", "rest.js",
-    "pin.js", "ادمن.js", "ضيف.js", "قفل.js", "all.js", "grouptag.js", "kick.js",
+    "pin.js", "ادمن.js", "ضيف.js", "all.js", "grouptag.js", "kick.js",
     "threadinfo.js", "tid.js", "uid.js", "userinfo.js", "prefix.js",
     "nm.js", "nik.js", "atomic.js", "unsend.js", "ابتايم.js"
   ];
   for (const file of removed) assert.equal(fs.existsSync(path.join(root, "commands", file)), false, file);
 
-  const retained = ["بيس.js", "محرك.js", "اسم.js", "كنيات.js", "setbio.js", "حذف.js", "خروج.js", "help.js", "command.js", "uptime.js"];
+  const retained = ["فتح.js", "قفل.js", "بيس.js", "محرك.js", "اسم.js", "كنيات.js", "setbio.js", "حذف.js", "خروج.js", "help.js", "command.js", "uptime.js"];
   for (const file of retained) assert.equal(fs.existsSync(path.join(root, "commands", file)), true, file);
   assert.equal(fs.existsSync(path.join(root, "SHADOW", "group-photo-guard.js")), false);
 });
@@ -77,7 +77,7 @@ test("قائمة المساعدة مزخرفة ولا تعرض أوامر محذ
   assert.match(output, /👥 !nik/);
   assert.match(output, /🛡️ إدارة المجموعة/);
   assert.match(output, /🔁 أنظمة التكرار/);
-  for (const removed of ["pp", "حماية_الصورة", "setavt", "emojimix", "rest", "kick", "grouptag", "قفل"]) {
+  for (const removed of ["pp", "حماية_الصورة", "setavt", "emojimix", "rest", "kick", "grouptag"]) {
     assert.doesNotMatch(output, new RegExp("!" + removed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s"));
   }
   assert.doesNotMatch(output, /طرق الاستخدام|الاختصارات:|اتوميك|تكرار النص/);
@@ -94,7 +94,7 @@ test("ملفات الأوامر الفعلية تُحمّل بلا تصادم ب
     };
     const commandDir = path.resolve(__dirname, "../../commands");
     const result = commandModule.loadCommands(target, commandDir);
-    assert.equal(result.commandCount, 12);
+    assert.equal(result.commandCount, 14);
     assert.equal(target["لوحة"], target["التحكم"]);
     assert.equal(target["تحكم"], target["التحكم"]);
     assert.equal(target.nm, target["اسم"]);

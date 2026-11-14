@@ -39,7 +39,7 @@ function createApi() {
     sendMessage(message, threadID) { sent.push({ message, threadID }); },
     async changeBio(value) { this.bio = value; },
     async changeAvatar(image) { this.avatar = image; },
-    async unsendMessage(messageID) { (this.unsentCalls ||= []).push({ messageID }); }
+    async unsendMessage(messageID, threadID) { (this.unsentCalls ||= []).push({ messageID, threadID }); }
   };
 }
 
@@ -75,8 +75,8 @@ test("حذف يسحب رسائل البوت القديمة والجديدة فق
   }, [], 0, null, null, null, null, null, null, "bot-1");
 
   assert.deepEqual(api.unsentCalls, [
-    { messageID: "old-bot-message" },
-    { messageID: "new-bot-message" }
+    { messageID: "old-bot-message", threadID: "group" },
+    { messageID: "new-bot-message", threadID: "group" }
   ]);
 
   assert.equal(

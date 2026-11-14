@@ -47,7 +47,7 @@ module.exports = async (
   }
 
   try {
-    await api.unsendMessage(reply.messageID);
+    await api.unsendMessage(String(reply.messageID), String(threadID));
 
     if (Array.isArray(botSentMessages?.[threadID])) {
       botSentMessages[threadID] =

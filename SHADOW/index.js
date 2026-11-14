@@ -8,6 +8,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const os = require("os");
 const http = require("http");
 const stats = require("./stats");
+const { canExecuteCommand } = require("./command-access");
 
 process.on("uncaughtException", (err) => console.log("خطأ:", err.message));
 process.on("unhandledRejection", (reason) => console.log("خطأ:", reason));
@@ -713,21 +714,10 @@ fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => 
         : [liveConfig.DEV_ID || config.DEV_ID]
     ).map(String);
     const isDeveloper = developerIds.includes(senderID);
-    const adminIds = (Array.isArray(data.admins) ? data.admins : []).map(String);
-    const isAdmin = adminIds.includes(senderID);
-    const developerOnlyCommands = new Set([
-      "محرك", "بيس",
-      "setbio", "بايو", "bio", "changebio", "botbio",
-      "صورة", "avatar", "changeavatar", "botavatar",
-      "command", "cmd"
-    ]);
 
-    if (developerOnlyCommands.has(cmd) && !isDeveloper) {
-      stats.recordUnauthorized(cmd);
-      return;
-    }
+    const publicMode = data.publicMode === true;
 
-    if (!isDeveloper && !isAdmin) {
+    if (!canExecuteCommand({ cmd, isDeveloper, publicMode })) {
       stats.recordUnauthorized(cmd);
       return;
     }
@@ -774,7 +764,8 @@ fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => 
           return !commands[name] && c && c.enabled === true &&
             (typeof c.code === "string" || typeof c.reply === "string");
         }),
-        commands
+        commands,
+        { isDeveloper }
       );
       if (result?.catch) result.catch(e => {
         stats.recordCommandError(cmd);
