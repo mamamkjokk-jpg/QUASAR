@@ -7,6 +7,7 @@ const DEVELOPER_ONLY_COMMANDS = new Set([
   "setbio", "بايو", "bio", "changebio", "botbio",
   "صورة", "avatar", "changeavatar", "botavatar",
   "خروج", "leave",
+  "تحميل", "autodownload", "download",
   "command", "cmd",
   "فتح", "open", "فتح_عام",
   "قفل", "close", "قفل_عام"

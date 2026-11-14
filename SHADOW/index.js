@@ -9,6 +9,7 @@ const os = require("os");
 const http = require("http");
 const stats = require("./stats");
 const { canExecuteCommand } = require("./command-access");
+const autoDownload = require("./auto-download");
 const { createMessageActivity } = require("./message-activity");
 
 process.on("uncaughtException", (err) => console.log("خطأ:", err.message));
@@ -633,6 +634,14 @@ fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => 
         });
       } catch (activityError) {
         console.log("خطأ في عداد رسائل المجموعة:", activityError?.message || activityError);
+      }
+    }
+
+    if (event.body && ["message", "message_reply"].includes(event.type)) {
+      try {
+        autoDownload(api, event, BOT_ID);
+      } catch (downloadError) {
+        console.log("QUASAR AUTO DOWNLOAD ERROR:", downloadError?.message || downloadError);
       }
     }
 

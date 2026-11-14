@@ -94,7 +94,7 @@ test("ملفات الأوامر الفعلية تُحمّل بلا تصادم ب
     };
     const commandDir = path.resolve(__dirname, "../../commands");
     const result = commandModule.loadCommands(target, commandDir);
-    assert.equal(result.commandCount, 15);
+    assert.equal(result.commandCount, 16);
     assert.equal(target["لوحة"], target["التحكم"]);
     assert.equal(target["تحكم"], target["التحكم"]);
     assert.equal(target.nm, target["اسم"]);
