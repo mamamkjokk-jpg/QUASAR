@@ -4,6 +4,7 @@ node_modules/
 
 # Runtime data and authentication material: keep in a private persistent volume.
 /config.json
+/fca-config.json
 /appState*.json
 /data*.json
 /bot-status*.json

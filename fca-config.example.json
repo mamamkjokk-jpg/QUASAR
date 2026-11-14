@@ -1,0 +1,18 @@
+{
+  "checkUpdate": {
+    "enabled": false,
+    "install": false,
+    "notifyIfCurrent": false
+  },
+  "mqtt": {
+    "enabled": true,
+    "reconnectInterval": 3600
+  },
+  "autoLogin": {
+    "enabled": false
+  },
+  "remoteControl": {
+    "enabled": false,
+    "autoReconnect": false
+  }
+}

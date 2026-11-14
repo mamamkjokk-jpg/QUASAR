@@ -1,4 +1,4 @@
-const ws3 = require("ws3-fca");
+const fcaLogin = require("@dongdev/fca-unofficial");
 const { getThreadInfoSafe, getThreadListSafe, isCoolingDown, installThreadOperationGuard } = require("./thread-info-guard");
 const fs = require("fs");
 const path = require("path");
@@ -145,14 +145,24 @@ function sendMessageAsync(api, message, threadID, replyToMessageID) {
   });
 }
 
-ws3.login({ appState }, (err, api) => {
-  if (err) return console.log("خطأ في تسجيل الدخول:", err);
+fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => {
+  if (err) {
+    writeBotStatus(false);
+    const loginErrorText = String(err?.message || err || "");
+    if (/checkpoint|too many sessions|multiple sessions|session limit|login.?blocked|temporarily blocked|rate.?limit|http\s*429|\b429\b|\b368\b/i.test(loginErrorText)) {
+      console.log("⛔ رفضت مكتبة FCA تسجيل الدخول أو طلب Facebook تحققًا/قيّد الجلسات. لم تتم أي محاولة دخول إضافية:", loginErrorText.slice(0, 240));
+    } else {
+      console.log("خطأ في تسجيل الدخول عبر @dongdev/fca-unofficial:", loginErrorText.slice(0, 240));
+    }
+    return;
+  }
 
   const BOT_ID = api.getCurrentUserID();
   currentBotId = BOT_ID;
 
-  // Restore account-profile actions removed from ws3-fca 3.x public API.
-  require("./ws3-profile-api")(api);
+  // Adapt the new FCA method names to the legacy SHADOW command surface.
+  const fcaCompat = require("./fca-compat")(api);
+  console.log("[FCA COMPAT] Installed:", fcaCompat.installed.join(", ") || "native methods");
 
   installThreadOperationGuard(api);
 
@@ -170,12 +180,34 @@ ws3.login({ appState }, (err, api) => {
   }
   let reportedOnline = true;
   writeBotStatus(true);
+
+  // The replacement library emits explicit account/session restriction events.
+  // Never attempt an extra login when Facebook requests a checkpoint or blocks login.
+  if (typeof api.on === "function") {
+    const restrictedEvents = ["checkpoint", "checkpoint_282", "checkpoint_956", "loginBlocked", "sessionExpired", "account_inactive"];
+    for (const eventName of restrictedEvents) {
+      api.on(eventName, details => {
+        reportedOnline = false;
+        writeBotStatus(false);
+        console.log(`[FCA SESSION] ${eventName}:`, String(details?.message || details?.reason || details || "requires account review").slice(0, 220));
+        for (const [timerKey, timerValue] of Object.entries(automicTimers)) {
+          if (["shadow-atomic", "shadow-engines"].includes(timerValue?.kind) && typeof timerValue.stop === "function") {
+            timerValue.stop();
+            delete automicTimers[timerKey];
+          }
+        }
+      });
+    }
+    api.on("rateLimit", details => {
+      console.log("[FCA SESSION] Rate limit reported; SHADOW request queue will apply cooldown.", String(details?.message || details || "").slice(0, 160));
+    });
+  }
   setInterval(() => writeBotStatus(reportedOnline), 5000);
   console.log("✅ يعمل | ID:", BOT_ID);
 
   const _origSend = api.sendMessage.bind(api);
 
-  // Support legacy callbacks and modern ws3-fca Promise calls.
+  // Support legacy callbacks and Promise-returning FCA calls.
   api.sendMessage = (msg, threadID, third, fourth) => {
     const legacyCallback = typeof third === "function" ? third : null;
     const callback = legacyCallback ||
@@ -213,7 +245,7 @@ ws3.login({ appState }, (err, api) => {
   async function setNicknameCompat(nickname, threadID, userID) {
     const method = [api.nickname, api.changeNickname, api.setNickname]
       .find(fn => typeof fn === "function");
-    if (!method) throw new Error("دالة تغيير الكنية غير متاحة في ws3-fca");
+    if (!method) throw new Error("دالة تغيير الكنية غير متاحة في FCA");
     return new Promise((resolve, reject) => {
       let settled = false;
       let timeout = null;
@@ -405,7 +437,7 @@ ws3.login({ appState }, (err, api) => {
           const now = Date.now();
           const last = groupNameLastAttempt.get(id) || 0;
 
-          if (now - last < 15000) continue;
+          if (now - last < 30000) continue;
 
           groupNameLastAttempt.set(id, now);
 
@@ -426,7 +458,7 @@ ws3.login({ appState }, (err, api) => {
   discoverBotGroups().then(checkBotNicknames);
   setInterval(checkBotNicknames, 60000);
   checkSavedGroupNames();
-  setInterval(checkSavedGroupNames, 90000);
+  setInterval(checkSavedGroupNames, 30000);
 
   // تحديث قائمة القروبات دورياً لاكتشاف القروبات الجديدة
   setInterval(discoverBotGroups, 300000);
@@ -488,8 +520,6 @@ ws3.login({ appState }, (err, api) => {
   if (typeof refreshSignalTimer.unref === "function") refreshSignalTimer.unref();
 
   let sessionErrorLogged = false;
-  let sessionRecoveryRunning = false;
-  let lastSessionRecoveryAt = 0;
   // Group-name and member-nickname protection events require listenEvents.
   try {
     if (typeof api.setOptions === "function") api.setOptions({ listenEvents: true });
@@ -500,7 +530,7 @@ ws3.login({ appState }, (err, api) => {
     if (err) {
       const errorText = String(err?.message || err || "");
       console.log("SHADOW MQTT ERROR:", errorText);
-      if (/checkpoint|logged.?out|login required|invalid app.?state|session.{0,20}(expired|invalid)|authentication|not authenticated/i.test(errorText)) {
+      if (/checkpoint|logged.?out|login required|invalid app.?state|session.{0,20}(expired|invalid)|authentication|not authenticated|too many sessions|multiple sessions|session limit|rate.?limit|temporarily blocked|http\s*429|\b429\b|\b368\b|\b1545012\b/i.test(errorText)) {
         reportedOnline = false;
         writeBotStatus(false);
         for (const [timerKey, timerValue] of Object.entries(automicTimers)) {
@@ -511,34 +541,30 @@ ws3.login({ appState }, (err, api) => {
         }
         if (!sessionErrorLogged) {
           sessionErrorLogged = true;
-          console.log("⚠️ يبدو أن جلسة الحساب انتهت أو رُفضت. أفحص مسار الاستعادة المدمج بالمكتبة إن كان متاحًا؛ وإلا يلزم تسجيل الدخول بالطريقة الرسمية.");
+          console.log("⚠️ يبدو أن جلسة الحساب انتهت أو رُفضت. لن أبدأ تسجيل دخول جديدًا تلقائيًا؛ افحص جلسة الحساب من تطبيق Facebook الرسمي قبل أي محاولة أخرى.");
         }
-        if (!sessionRecoveryRunning && Date.now() - lastSessionRecoveryAt > 60000 && typeof api.ws3?.relogin === "function") {
-          sessionRecoveryRunning = true;
-          lastSessionRecoveryAt = Date.now();
-          try {
-            const recovery = api.ws3.relogin();
-            if (recovery && typeof recovery.then === "function") {
-              recovery.then(() => {
-                console.log("ℹ️ اكتمل طلب استعادة جلسة ws3-fca؛ سأنتظر عودة أحداث الاتصال لتأكيد أن الحساب متصل.");
-              }).catch(recoveryError => {
-                console.log("تعذرت استعادة الجلسة تلقائيًا:", recoveryError?.message || recoveryError);
-              }).finally(() => {
-                sessionRecoveryRunning = false;
-              });
-            } else {
-              console.log("ℹ️ تم استدعاء استعادة الجلسة المدمجة. يلزم التأكد من عودة الاتصال في سجل التشغيل.");
-              sessionRecoveryRunning = false;
-            }
-          } catch (recoveryError) {
-            sessionRecoveryRunning = false;
-            console.log("تعذرت استعادة الجلسة تلقائيًا:", recoveryError?.message || recoveryError);
-          }
+        const restrictionDetected = /checkpoint|too many sessions|multiple sessions|session limit|rate.?limit|temporarily blocked|http\s*429|\b429\b|\b368\b|\b1545012\b/i.test(errorText);
+        if (restrictionDetected) {
+          console.log("⛔ تم إيقاف إعادة تسجيل الدخول التلقائية احترامًا لتقييد الحساب. افحص حالة الحساب من تطبيق Facebook الرسمي قبل أي محاولة جديدة.");
+          return;
         }
       }
       return;
     }
     if (!event) return;
+
+    if (["account_inactive", "stop_listen"].includes(String(event.type || ""))) {
+      reportedOnline = false;
+      writeBotStatus(false);
+      console.log("[FCA SESSION] Listener stopped or account inactive:", String(event.reason || event.error?.message || event.error || event.type).slice(0, 220));
+      for (const [timerKey, timerValue] of Object.entries(automicTimers)) {
+        if (["shadow-atomic", "shadow-engines"].includes(timerValue?.kind) && typeof timerValue.stop === "function") {
+          timerValue.stop();
+          delete automicTimers[timerKey];
+        }
+      }
+      return;
+    }
 
     reportedOnline = true;
     sessionErrorLogged = false;
@@ -584,7 +610,7 @@ ws3.login({ appState }, (err, api) => {
       }
     }
 
-    if (!event.body || event.type !== "message") return;
+    if (!event.body || !["message", "message_reply"].includes(event.type)) return;
 
     const data = loadData() || {};
     const PREFIX = data.prefix || "!";
@@ -692,6 +718,7 @@ ws3.login({ appState }, (err, api) => {
     const developerOnlyCommands = new Set([
       "محرك", "بيس",
       "setbio", "بايو", "bio", "changebio", "botbio",
+      "صورة", "avatar", "changeavatar", "botavatar",
       "command", "cmd"
     ]);
 

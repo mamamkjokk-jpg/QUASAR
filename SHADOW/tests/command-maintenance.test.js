@@ -94,10 +94,13 @@ test("ملفات الأوامر الفعلية تُحمّل بلا تصادم ب
     };
     const commandDir = path.resolve(__dirname, "../../commands");
     const result = commandModule.loadCommands(target, commandDir);
-    assert.equal(result.commandCount, 10);
+    assert.equal(result.commandCount, 12);
+    assert.equal(target["لوحة"], target["التحكم"]);
+    assert.equal(target["تحكم"], target["التحكم"]);
     assert.equal(target.nm, target["اسم"]);
     assert.equal(target.nik, target["كنيات"]);
     assert.equal(target.بايو, target.setbio);
+    assert.equal(target.avatar, target["صورة"]);
     assert.equal(target.cmd, target.command);
     assert.equal(typeof target.load, "undefined");
   } finally {
@@ -111,4 +114,17 @@ test("الجلسات الثلاث مسموحة في startManagedBot وRailway he
   assert.doesNotMatch(panel, /id !== "1"/);
   assert.match(panel, /app\.get\("\/api\/health"/);
   assert.match(panel, /id === "2" \? 3002 : 3003/);
+});
+
+
+test("حماية اسم المجموعة تعمل كل 30 ثانية وتمنع إعادة المحاولة الأقرب من ذلك", () => {
+  const runtime = fs.readFileSync(path.resolve(__dirname, "../index.js"), "utf8");
+  assert.match(runtime, /if \(now - last < 30000\) continue;/);
+  assert.match(runtime, /setInterval\(checkSavedGroupNames, 30000\)/);
+});
+
+test("مشغل اللوحة يمنع تشغيل c_user نفسه في أكثر من جلسة محلية", () => {
+  const panel = fs.readFileSync(path.resolve(__dirname, "../panel.js"), "utf8");
+  assert.match(panel, /الحساب نفسه موجود في الجلسة/);
+  assert.match(panel, /getSessionFiles\(otherId\)/);
 });

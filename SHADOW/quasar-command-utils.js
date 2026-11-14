@@ -15,7 +15,7 @@ function uniqueIds(values) {
 
 async function invoke(api, methodName, args, timeoutMs = 30000) {
   const method = api && api[methodName];
-  if (typeof method !== "function") throw new Error(`واجهة ${methodName} غير متاحة في ws3-fca`);
+  if (typeof method !== "function") throw new Error(`واجهة ${methodName} غير متاحة في @dongdev/fca-unofficial`);
 
   if (method.length <= args.length) return await method.apply(api, args);
 

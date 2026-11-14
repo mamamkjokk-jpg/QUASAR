@@ -61,7 +61,7 @@ module.exports = async (api, event, args, startTime, loadData, saveData, automic
     } else if (typeof api.gcmember === "function") {
       await invoke(api, "gcmember", ["remove", botID, threadID]);
     } else {
-      throw new Error("لا تتوفر دالة مغادرة المجموعة في مكتبة ws3-fca");
+      throw new Error("لا تتوفر دالة مغادرة المجموعة في مكتبة @dongdev/fca-unofficial");
     }
   } catch (error) {
     console.log("SHADOW LEAVE GROUP ERROR:", error?.message || error);

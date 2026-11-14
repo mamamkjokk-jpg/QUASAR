@@ -21,7 +21,7 @@ const CACHE_MAX_AGE_MS = 10 * 60 * 1000;
 
 function setNicknameAsync(api, nickname, threadID, userID) {
   const method = [api.nickname, api.changeNickname, api.setNickname].find(fn => typeof fn === "function");
-  if (!method) return Promise.reject(new Error("مكتبة ws3-fca لا توفر دالة تغيير الكنية"));
+  if (!method) return Promise.reject(new Error("مكتبة @dongdev/fca-unofficial لا توفر دالة تغيير الكنية"));
 
   return new Promise((resolve, reject) => {
     let settled = false;

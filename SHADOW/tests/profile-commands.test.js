@@ -28,6 +28,7 @@ Module._load = function(request, parent, isMain) {
   return originalLoad.call(this, request, parent, isMain);
 };
 const setBio = require("../../commands/setbio");
+const changeAvatar = require("../../commands/صورة");
 const deletion = require("../../commands/حذف");
 Module._load = originalLoad;
 
@@ -37,6 +38,7 @@ function createApi() {
     sent,
     sendMessage(message, threadID) { sent.push({ message, threadID }); },
     async changeBio(value) { this.bio = value; },
+    async changeAvatar(image) { this.avatar = image; },
     async unsendMessage(messageID) { (this.unsentCalls ||= []).push({ messageID }); }
   };
 }
@@ -81,4 +83,20 @@ test("حذف يسحب رسائل البوت القديمة والجديدة فق
     api.unsentCalls.some(x => x.messageID.startsWith("command-")),
     false
   );
+});
+
+
+test("صورة يغيّر صورة الحساب من رابط صورة عبر واجهة FCA فقط", async () => {
+  const api = createApi();
+  await changeAvatar(api, { threadID: "group" }, ["صورة", "https://images.example/avatar.jpg"]);
+  assert.equal(api.avatar.testImage, true);
+  assert.equal(api.avatar.url, "https://images.example/avatar.jpg");
+  assert.match(String(api.sent.at(-1).message), /تغيير صورة حساب البوت/);
+});
+
+test("صورة لا يدّعي النجاح إذا لم توفر المكتبة changeAvatar", async () => {
+  const api = createApi();
+  delete api.changeAvatar;
+  await changeAvatar(api, { threadID: "group" }, ["صورة"]);
+  assert.match(String(api.sent.at(-1).message), /غير متاح/);
 });

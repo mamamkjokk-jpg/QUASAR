@@ -1,0 +1,33 @@
+QUASAR — نقل محرك FCA إلى @dongdev/fca-unofficial 4.0.3
+
+ما تغيّر:
+- استبدال اعتماد ws3-fca بالحزمة @dongdev/fca-unofficial@4.0.3.
+- تحويل تسجيل الدخول إلى واجهة callback الرسمية المتوافقة مع FCA مع تفعيل listenEvents.
+- إضافة SHADOW/fca-compat.js لتوافق gcname/setTitle وnickname/changeNickname وردود الأفعال.
+- جلب معلومات عدة مجموعات بالتتابع حتى لا تتحول إلى طلبات متزامنة كثيرة.
+- قبول event.type من النوعين message و message_reply.
+- إزالة تعديل postinstall الخاص ببنية ws3-fca القديمة وإزالة الوصول إلى api.ws3.relogin.
+- استخدام changeBio الأصلية من المكتبة وعدم لمس ctx/defaultFuncs الداخلية.
+- إضافة fca-config.json مع تعطيل autoLogin والتحديث التلقائي والتحكم البعيد افتراضيًا.
+
+الجلسات:
+- لا يغيّر التعديل appState.json أو appState2.json أو appState3.json.
+- لا ينسخ ملفات جلسة بين الحسابات ولا يدمج الحسابات.
+- لا توجد محاولة لتجاوز checkpoint أو حظر Facebook.
+- لا يُشغّل البوت تلقائيًا.
+
+التثبيت في Termux بعد إنشاء نسخة احتياطية وفك ZIP إلى ~/QUASAR:
+  cd ~/QUASAR || exit 1
+  rm -f SHADOW/ws3-profile-api.js SHADOW/tests/ws3-profile-api.test.js scripts/patch-ws3-fca.js
+  npm install --save-exact @dongdev/fca-unofficial@4.0.3 || exit 1
+  node --check SHADOW/index.js || exit 1
+  node --test SHADOW/tests/*.test.js
+
+أمر npm install يثبت المكتبة ويحدّث package-lock.json على جهازك من npm registry.
+لا تستخدم npm ci قبل اكتمال هذا الأمر بنجاح.
+لا تشغّل البوت حتى تراجع نتائج الاختبار.
+
+حدود التحقق:
+- الاختبارات المحلية لا تتصل بفيسبوك ولا تثبت أن AppState صالح.
+- لم يتم تنفيذ login حي أو تغيير صورة الحساب.
+- قد يتطلب sqlite3 أحد متطلبات البناء الأصلية على Termux؛ عند فشل التثبيت أرسل سجل npm الكامل.

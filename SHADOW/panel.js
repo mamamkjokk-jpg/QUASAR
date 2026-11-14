@@ -977,6 +977,24 @@ function startManagedBot(id = "1") {
       !appState.some(x => x && [x.key, x.name].includes("xs") && typeof x.value === "string" && x.value.trim())) {
     throw new Error("ملف الجلسة يجب أن يحتوي على c_user و xs بقيم غير فارغة");
   }
+  const currentCookie = appState.find(x => x && [x.key, x.name].includes("c_user"));
+  const currentAccountId = String(currentCookie.value).trim();
+  for (const otherId of ["1", "2", "3"]) {
+    if (otherId === id) continue;
+    const otherFile = getSessionFiles(otherId).session;
+    if (!fs.existsSync(otherFile)) continue;
+    try {
+      const otherState = JSON.parse(fs.readFileSync(otherFile, "utf8"));
+      if (!Array.isArray(otherState)) continue;
+      const otherCookie = otherState.find(x => x && [x.key, x.name].includes("c_user") && typeof x.value === "string");
+      if (otherCookie && String(otherCookie.value).trim() === currentAccountId) {
+        throw new Error("الحساب نفسه موجود في الجلسة " + otherId + ". تم منع تشغيله مرتين محليًا؛ استخدم حسابًا منفصلًا لكل جلسة.");
+      }
+    } catch (error) {
+      if (error && /الحساب نفسه موجود/.test(String(error.message))) throw error;
+      // A different session with malformed JSON is ignored here and remains independently diagnosable.
+    }
+  }
   state.logs.length = 0;
   const port = files.port;
   const child = spawn(process.execPath, [entry], { cwd: ROOT, env: { ...process.env, NODE_ENV: "", SHADOW_SESSION_ID: id, SHADOW_BOT_PORT: String(port), PORT: String(port) }, stdio: ["ignore", "pipe", "pipe"] });

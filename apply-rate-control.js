@@ -56,11 +56,11 @@ if (installCount > 1) {
 }
 
 if (installCount === 0) {
-  const anchor = '  require("./ws3-profile-api")(api);';
+  const anchor = '  const fcaCompat = require("./fca-compat")(api);';
   const count = index.split(anchor).length - 1;
 
   if (count !== 1) {
-    stop(`Expected one installation anchor; found ${count}.`);
+    stop(`Expected one FCA compatibility installation anchor; found ${count}.`);
   }
 
   index = index.replace(anchor, `${anchor}\n\n${installCall}`);

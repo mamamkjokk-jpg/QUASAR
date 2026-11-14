@@ -1,0 +1,22 @@
+حالة دمج FCA
+============
+
+هذه النسخة تستبدل ws3-fca بالحزمة @dongdev/fca-unofficial@4.0.3 داخل محرك SHADOW.
+يستخدم الدخول واجهة callback القديمة التي توثقها المكتبة الجديدة، مع طبقة توافق لأسماء الدوال التي يستعملها QUASAR.
+
+ملاحظات التوافق:
+- تحويل setTitle إلى أسماء المجموعة القديمة gcname/setGroupName/setThreadName.
+- ربط changeNickname بأسماء nickname/setNickname.
+- ربط setMessageReactionMqtt بـ setMessageReaction.
+- تحويل قراءة قائمة معرّفات المجموعات إلى قراءات متتابعة وإعادة النتيجة كخريطة.
+- دعم أحداث message و message_reply حتى لا تُهمل الرسائل التي تكون ردودًا.
+- إزالة اعتماد api.ctx/defaultFuncs الخاص بـ ws3-fca واستخدام changeBio الأصلية.
+
+ضوابط الجلسة:
+- لا يغيّر التعديل appState.json أو appState2.json أو appState3.json.
+- لا ينسخ ملفات جلسة بين الحسابات ولا يحاول تجاوز checkpoint أو حظر Facebook.
+- تم تعطيل autoLogin داخل fca-config.json، فلا يُطلب من المكتبة إنشاء تسجيل دخول جديد تلقائيًا.
+- عند checkpoint أو loginBlocked أو sessionExpired يتم تسجيل الحالة وإيقاف مؤقتات المحركات الآلية.
+- لم يتم تشغيل أي حساب أو إجراء تسجيل دخول حقيقي.
+
+Shadow-FCA الموجود في الأرشيف ليس المحرك المعتمد، ولذلك لا يتم استخدامه في هذا الدمج.
