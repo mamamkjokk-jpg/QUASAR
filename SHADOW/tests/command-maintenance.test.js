@@ -72,9 +72,9 @@ test("قائمة المساعدة مزخرفة ولا تعرض أوامر محذ
   help({ sendMessage(value) { output = String(value); } }, { threadID: "g" }, [], 0,
     () => ({ prefix: "!" }), () => {}, {}, {}, {}, {}, "bot",
     ["help", "بيس", "محرك", "اسم", "كنيات", "setbio", "حذف", "خروج", "command", "uptime"], []);
-  assert.match(output, /QUASAR × SHADOW/);
-  assert.match(output, /🏷️ !nm/);
-  assert.match(output, /👥 !nik/);
+  assert.match(output, /QUASAR/);
+  assert.match(output, /🏷️ !اسم/);
+  assert.match(output, /👥 !كنيات/);
   assert.match(output, /🛡️ إدارة المجموعة/);
   assert.match(output, /🔁 أنظمة التكرار/);
   for (const removed of ["pp", "حماية_الصورة", "setavt", "emojimix", "rest", "kick", "grouptag"]) {
@@ -94,7 +94,7 @@ test("ملفات الأوامر الفعلية تُحمّل بلا تصادم ب
     };
     const commandDir = path.resolve(__dirname, "../../commands");
     const result = commandModule.loadCommands(target, commandDir);
-    assert.equal(result.commandCount, 14);
+    assert.equal(result.commandCount, 15);
     assert.equal(target["لوحة"], target["التحكم"]);
     assert.equal(target["تحكم"], target["التحكم"]);
     assert.equal(target.nm, target["اسم"]);

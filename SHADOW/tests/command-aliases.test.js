@@ -25,9 +25,9 @@ test("قائمة الأوامر تعرض الاسم الأساسي ولا تكر
   const api = { sendMessage(message) { output = String(message); } };
   help(api, { threadID: "group" }, [], 0, () => ({ prefix: "!" }), () => {}, {}, {}, {}, {}, "bot",
     ["help", "اسم", "كنيات", "uptime", "حذف", "setbio", "command", "بيس", "محرك"], []);
-  assert.match(output, /🏷️ !nm/);
-  assert.match(output, /👥 !nik/);
-  assert.doesNotMatch(output, /!nm —|!atomic —|!nik —|!ابتايم —|!unsend —/);
+  assert.match(output, /🏷️ !اسم/);
+  assert.match(output, /👥 !كنيات/);
+  assert.doesNotMatch(output, /!nm|!atomic|!nik|!ابتايم|!unsend/);
   assert.match(output, /🛡️ إدارة المجموعة/);
   assert.match(output, /🔁 أنظمة التكرار/);
   assert.match(output, /👤 حساب البوت/);

@@ -9,6 +9,7 @@ const os = require("os");
 const http = require("http");
 const stats = require("./stats");
 const { canExecuteCommand } = require("./command-access");
+const { createMessageActivity } = require("./message-activity");
 
 process.on("uncaughtException", (err) => console.log("خطأ:", err.message));
 process.on("unhandledRejection", (reason) => console.log("خطأ:", reason));
@@ -160,6 +161,17 @@ fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => 
 
   const BOT_ID = api.getCurrentUserID();
   currentBotId = BOT_ID;
+
+  const messageActivity = createMessageActivity({
+    developerIds: config.DEV_IDS,
+    react: async (messageID, threadID) => {
+      if (typeof api.setMessageReactionMqtt !== "function") {
+        throw new Error("دالة التفاعل غير متاحة");
+      }
+      await api.setMessageReactionMqtt("❤️", messageID, threadID);
+    }
+  });
+
 
   // Adapt the new FCA method names to the legacy SHADOW command surface.
   const fcaCompat = require("./fca-compat")(api);
@@ -611,6 +623,19 @@ fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => 
       }
     }
 
+    if (["message", "message_reply"].includes(event.type)) {
+      try {
+        await messageActivity.record(event, (threadID, messageEvent) => {
+          const sender = String(messageEvent.senderID || "");
+          if (!sender || sender === String(BOT_ID)) return false;
+          if (messageEvent.isGroup === false) return false;
+          return threadID !== sender;
+        });
+      } catch (activityError) {
+        console.log("خطأ في عداد رسائل المجموعة:", activityError?.message || activityError);
+      }
+    }
+
     if (!event.body || !["message", "message_reply"].includes(event.type)) return;
 
     const data = loadData() || {};
@@ -721,6 +746,21 @@ fcaLogin({ appState }, { listenEvents: true, selfListen: false }, (err, api) => 
       stats.recordUnauthorized(cmd);
       return;
     }
+
+    try {
+      if (typeof api.sendTypingIndicator === "function") {
+        await api.sendTypingIndicator(String(event.threadID), true, {
+          duration: 3000,
+          autoStop: true
+        });
+      } else {
+        console.log("مؤشر الكتابة غير متاح في API.");
+      }
+    } catch (typingError) {
+      console.log("تعذر إظهار مؤشر الكتابة:", typingError?.message || typingError);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     if (hasCustomCommand) {
       try {

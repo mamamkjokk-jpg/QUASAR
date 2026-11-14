@@ -54,7 +54,7 @@ const command = async (
     const load = os.loadavg().map(n => n.toFixed(2)).join(" / ");
 
     const msg = [
-      "🌌✨━━━━━━━━━━ ⚛️ QUASAR × SHADOW ⚛️ ━━━━━━━━━━✨🌌",
+      "🌌✨━━━━━━━━━━ ⚛️ QUASAR ⚛️ ━━━━━━━━━━✨🌌",
       "                 📊 إحصائيات وحالة النظام",
       "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
       "",
@@ -96,7 +96,7 @@ const command = async (
       `│ المؤقتات النشطة: ${count(automicTimers)}`,
       "╰━━━━━━━━━━━━━━━━━━━━━━━━╯",
       "",
-      "🌠 QUASAR × SHADOW",
+      "🌠 QUASAR",
       "             Powered by ⚛️"
     ].join("\n");
 

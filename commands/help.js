@@ -2,22 +2,29 @@
 
 const sections = [
   ["🛡️ إدارة المجموعة", [
-    ["اسم", "nm", "🏷️"],
-    ["كنيات", "nik", "👥"],
-    ["خروج", null, "🚪"],
-    ["حذف", null, "🗑️"]
+    ["اسم", "اسم", "🏷️"],
+    ["كنيات", "كنيات", "👥"],
+    ["خروج", "خروج", "🚪"],
+    ["حذف", "حذف", "🗑️"]
+  ]],
+  ["🔐 إدارة الوصول", [
+    ["فتح", "فتح", "🔓"],
+    ["قفل", "قفل", "🔒"],
+    ["التحكم", "التحكم", "🎛️"]
   ]],
   ["🔁 أنظمة التكرار", [
-    ["بيس", null, "⚡"],
-    ["محرك", null, "🚀"]
+    ["بيس", "بيس", "⚡"],
+    ["محرك", "محرك", "🚀"]
   ]],
   ["👤 حساب البوت", [
-    ["setbio", "بايو", "🪪"]
+    ["setbio", "بايو", "🪪"],
+    ["صورة", "صورة", "🖼️"]
   ]],
   ["🧰 أدوات النظام", [
-    ["command", "cmd", "🔧"],
-    ["uptime", "ابتايم", "⏱️"],
-    ["help", null, "📖"]
+    ["command", "command", "🔧"],
+    ["uptime", "uptime", "⏱️"],
+    ["جلسة", "جلسة", "🖥️"],
+    ["help", "help", "📜"]
   ]]
 ];
 
@@ -27,8 +34,9 @@ module.exports = (api, event, _args, _startTime, loadData,
   const prefix = String((loadData() || {}).prefix || "!");
   const available = new Set([...builtInCommands, ...customCommandNames].map(String));
   const shown = new Set();
+
   const output = [
-    "🌌✨━━━━━━━━━━ ⚛️ QUASAR × SHADOW ⚛️ ━━━━━━━━━━✨🌌",
+    "🌌✨━━━━━━━━━━ ⚛️ QUASAR ⚛️ ━━━━━━━━━━✨🌌",
     "             📜 قَائِمَةُ الأَوَامِر 📜",
     "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   ];
@@ -39,35 +47,22 @@ module.exports = (api, event, _args, _startTime, loadData,
 
     output.push(`\n${title}`);
     output.push("✨━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━✨");
-    for (const [name, alias, icon] of active) {
+
+    for (const [name, displayName, icon] of active) {
       shown.add(name);
-      const displayName = name === "setbio" ? "بايو" : name;
-      const preferredName = alias === "nm" || alias === "nik" ? alias : displayName;
-      output.push(`${icon} ${prefix}${preferredName}`);
-      if (alias && alias !== preferredName) {
-        output.push(`   ↳ 🔤 اختصار: ${prefix}${alias}`);
-      } else if (preferredName !== displayName) {
-        output.push(`   ↳ 🏷️ الاسم الآخر: ${prefix}${displayName}`);
-      } else if (alias && alias === displayName && name !== displayName) {
-        output.push(`   ↳ 🏷️ الاسم البرمجي: ${prefix}${name}`);
-      }
+      output.push(`${icon} ${prefix}${displayName}`);
     }
   }
 
-  const extras = [...available]
-    .filter(name => !shown.has(name))
+  const custom = [...new Set(customCommandNames.map(String))]
+    .filter(name => !shown.has(name) && available.has(name))
     .sort((a, b) => a.localeCompare(b, "ar"));
-  if (extras.length) {
-    output.push("\n🧩 أوامر إضافية");
+
+  if (custom.length) {
+    output.push("\n🧩 الأوامر المخصصة");
     output.push("✨━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━✨");
-    for (const name of extras) output.push(`🔹 ${prefix}${name}`);
+    for (const name of custom) output.push(`🔹 ${prefix}${name}`);
   }
 
-  output.push(`⚡ بيس: ${prefix}بيس [النص] [الثواني]  |  ${prefix}بيس إيقاف`);
-  output.push(`🚀 محرك: ${prefix}محرك 1/2/3 [النص]  |  ${prefix}محرك إيقاف`);
-  output.push("⏱️ أقل فاصل لبيس: 12 ثانية.");
-  output.push("📨 أول رسالة هي النص فقط، مع الحفاظ على الأسطر.");
-  output.push("💡 لا يعمل أكثر من نظام تكرار واحد في المجموعة نفسها.");
-  output.push("🌠 QUASAR × SHADOW — Powered by ⚛️");
   return api.sendMessage(output.join("\n"), event.threadID);
 };

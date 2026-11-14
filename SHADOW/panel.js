@@ -46,6 +46,7 @@ const DATA_FILE = path.join(DATA_DIR, "data.json");
 const SESSION_FILE = path.join(DATA_DIR, "appState.json");
 const STATUS_FILE = path.join(DATA_DIR, "bot-status.json");
 const CONFIG_FILE = path.join(DATA_DIR, "config.json");
+const PANEL_STATUS_FILE = path.join(DATA_DIR, "panel-status.json");
 const PORT = Number(process.env.PORT || process.env.PANEL_PORT || 3001);
 const TELEGRAM_SECRET_FILE = path.join(DATA_DIR, ".telegram-secret");
 const TELEGRAM_INTERNAL_SECRET = (() => {
@@ -1402,5 +1403,13 @@ app.get("/api/files/read", auth, (req, res) => {
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`QUASAR × SHADOW PANEL: http://127.0.0.1:${PORT}/shadowxdiablos`);
+  try {
+    writeJsonAtomic(PANEL_STATUS_FILE, {
+      startedAt: new Date().toISOString(),
+      pid: process.pid
+    });
+  } catch (error) {
+    console.log("تعذر حفظ حالة واجهة QUASAR:", error.message);
+  }
+  console.log(`QUASAR PANEL: http://127.0.0.1:${PORT}/shadowxdiablos`);
 });
