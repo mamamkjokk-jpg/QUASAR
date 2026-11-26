@@ -331,8 +331,10 @@ module.exports = function autoDownload(api, event, botID) {
     const threadID = String(event.threadID);
 
     if (senderID === String(botID)) return;
-    if (event.isGroup === false || threadID === senderID) return;
-
+    
+    // 🌟 التعديل هنا: تم إزالة شرط منع الخاص (event.isGroup === false)
+    // لكي يعمل التحميل التلقائي في الخاص أيضاً ولا يقطع سلسلة الأوامر.
+    
     const config = loadConfig();
 
     if (config.AUTO_DOWNLOAD_ENABLED !== true) return;
